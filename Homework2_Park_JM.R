@@ -60,16 +60,34 @@ df[age < 20 | age > 80, "age"] = NA
 df$BMI <- paste(format(round((df$weight/df$height), 2)))
 
 # h) calculate a function that creates a bmi for each person
-fahrenheit_to_celsius <- function(temp_F) {
-  temp_C <- (temp_F - 32) * 5 / 9
-  return(temp_C)
-}
-
-BMI_function <- function (weight,height){
-  BMI = weight/height
+BMI_function <- function (weight, height){
+  # calculate BMI, only to two decimals
+  BMI <- paste(format(round((weight/height), 2)))
   return(BMI)
 }
-BMI
 
+BMI_function(47,160)
+
+# i) use *apply functions to create a data.frame with code and bmi
+
+new_df <- df[c("Code", "BMI")]
+
+df_split <- split(new_df, new_df$Code)
+df_split
+
+apply_df <- lapply (df_split, BMI_function)
+strike.coefs
+
+# lapply(split_df, FUN = BMI_function)
+# 
+# apply_df <- sapply(split_df, BMI_function)
+
+
+# j) use tapply to calculate the mean BMI by gender
+
+tapply(df$BMI, list(df$gender), mean)
+
+# j) modify function in question i to apply +1% correction 
+# of the actual bmi for male participants
 
 

@@ -1,0 +1,61 @@
+---
+title: "class_notes"
+author: "Jung Mee Park"
+date: "10/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+functions in R. Functions will make processes much faster. 
+basic syntax
+
+fun <- function(args, ...) {
+  out <- ...
+  return(out)
+}
+
+```{r}
+f1 <- function(x){
+  a <- x^2 + 1
+  return(a)
+}
+
+x<-2
+a<-3
+f1(x)
+```
+Trying to do another solution for the function problem
+
+```{r}
+# or another solution
+bmi_calc <- function(df) {
+  bmi <- weight/height
+  formatted_bmi <- paste(format(round(bmi, 2)))
+  return(formatted_bmi)
+}
+
+bmi_calc(R2)
+```
+
+bmi_calc(R2)
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
