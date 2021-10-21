@@ -54,19 +54,30 @@ max(df$age)
 df[age < 20 | age > 80, "age"] = NA
 
 # g) calculate BMI. Round to two decimal places
-# df$BMI <- df$weight/df$height
-# df$BMI <- paste(format(round(df$BMI, 2)))
 
-df$BMI <- paste(format(round((df$weight/df$height), 2)))
+options(digits=2)
+df$BMI <- df$weight/df$height
+# df$BMI <- paste(format(round(df$BMI, 2)))
+# df$BMI <- paste(format(round((df$weight/df$height), 2)))
 
 # h) calculate a function that creates a bmi for each person
-BMI_function <- function (weight, height){
-  # calculate BMI, only to two decimals
-  BMI <- paste(format(round((weight/height), 2)))
-  return(BMI)
-}
+# BMI_function <- function (weight, height){
+#   # calculate BMI, only to two decimals
+#   BMI <- paste(format(round((weight/height), 2)))
+#   return(BMI)
+# }
+# 
+# BMI_function(47,160)
 
-BMI_function(47,160)
+#### another function
+options(digits=2)
+BMI_f <- function (weight, height){
+  # calculate BMI, only to two decimals
+  BMI_out <- weight/height
+  return(BMI_out)
+}
+# 
+BMI_f(47,160)
 
 # i) use *apply functions to create a data.frame with code and bmi
 
@@ -75,19 +86,47 @@ new_df <- df[c("Code", "BMI")]
 df_split <- split(new_df, new_df$Code)
 df_split
 
-apply_df <- lapply (df_split, BMI_function)
-strike.coefs
+index <- mapply (FUN = BMI_f, height = df$height, weight = df$weight) # we need values from two columns
+index
+# 
+
+
+lapply(c(4,5), function(x){
+  BMI_f(arg1=df[x,Code], arg2=df[x,BMI])
+})
 
 # lapply(split_df, FUN = BMI_function)
 # 
 # apply_df <- sapply(split_df, BMI_function)
 
-
-# j) use tapply to calculate the mean BMI by gender
-
-tapply(df$BMI, list(df$gender), mean)
+# j) use tapply to calculate the mean BMI by gender 
+tapply(df$BMI, df$gender, mean)
 
 # j) modify function in question i to apply +1% correction 
 # of the actual bmi for male participants
 
+f <- function(x) x*1.01 # this is not quite it
+tapply(df$BMI, df$gender=="m", f)
 
+
+# k) red wine dataset
+#    a) from the website
+wine_data <- read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv",
+                      header = TRUE, sep=";") 
+# head(wine_data)
+summary(wine_data) # There are 12 variables. 
+colMeans(wine_data) # This shows the mean value for each of the columns. 
+# The data frame contains 12 numeric variables that describe red wine quality.
+
+#    b) from local directory
+setwd("~/Documents/INFO 523 fall 2021")
+red_wine <- read.csv("winequality-red.csv", header = TRUE, sep= ";") #somehow this did not work
+
+# For me, grabbing the data directly from the website was faster. 
+# R was not reading the csv file  from my working directory correctly. 
+# I had to try a few different times to identify the sep = ";".
+# When you download direct from the website, you also eliminate errors such as your computer not being
+# able to read the file or corrupting it during the download. 
+
+
+                       
