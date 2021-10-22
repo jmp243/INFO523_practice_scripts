@@ -54,22 +54,10 @@ max(df$age)
 df[age < 20 | age > 80, "age"] = NA
 
 # g) calculate BMI. Round to two decimal places
-
 options(digits=2)
 df$BMI <- df$weight/df$height
-# df$BMI <- paste(format(round(df$BMI, 2)))
-# df$BMI <- paste(format(round((df$weight/df$height), 2)))
 
-# h) calculate a function that creates a bmi for each person
-# BMI_function <- function (weight, height){
-#   # calculate BMI, only to two decimals
-#   BMI <- paste(format(round((weight/height), 2)))
-#   return(BMI)
-# }
-# 
-# BMI_function(47,160)
-
-#### another function
+# h) write a function for a single person
 options(digits=2)
 BMI_f <- function (weight, height){
   # calculate BMI, only to two decimals
@@ -80,20 +68,28 @@ BMI_f <- function (weight, height){
 BMI_f(47,160)
 
 # i) use *apply functions to create a data.frame with code and bmi
-
 new_df <- df[c("Code", "BMI")]
 
 df_split <- split(new_df, new_df$Code)
 df_split
 
 index <- mapply (FUN = BMI_f, height = df$height, weight = df$weight) # we need values from two columns
-index
-# 
+index # this is a vector
 
+cbind.data.frame(Code = df$Code, index) 
 
-lapply(c(4,5), function(x){
-  BMI_f(arg1=df[x,Code], arg2=df[x,BMI])
+# From CRP 
+lapply(1:N, function(x){
+  yourfunction(arg1=data[x,col1], arg2=data[x,col2])
 })
+
+# lapply(df, function (weight,height){
+#   # calculate BMI, only to two decimals
+#   BMI_out <- weight(x)/height(y)
+#   return(BMI_out)
+# })
+# 
+# library("purrr")
 
 # lapply(split_df, FUN = BMI_function)
 # 
@@ -105,8 +101,22 @@ tapply(df$BMI, df$gender, mean)
 # j) modify function in question i to apply +1% correction 
 # of the actual bmi for male participants
 
-f <- function(x) x*1.01 # this is not quite it
-tapply(df$BMI, df$gender=="m", f)
+# func <- function(x) x*1.01 # this is not quite it
+# tapply(df$BMI, df$gender=="m", func) #This is applying the func for all of them.
+
+BMI_m <- function (weight, height, gender){
+  # if gender is male
+  if(gender == "m"){
+  # add a 1% correction by * 1.01
+  BMI <- (weight/height)*1.01 
+  return(BMI)
+  } else {  # calculate BMI
+    BMI <- (weight/height)}
+  return(BMI)
+} 
+BMI_m(weight = df$weight[2], height = df$height[2], gender = df$gender[2])
+
+mapply(BMI_m, weight = df$weight, height = df$height, gender = df$gender) 
 
 
 # k) red wine dataset

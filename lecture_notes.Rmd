@@ -53,6 +53,14 @@ simplify <- function (u,v){
   (u + v) *2
 }
 ```
+Doing the male bmi 
+```{r}
+library(tidyverse)
+df2 <- df %>% 
+  filter(gender == "m") %>% 
+  mutate(new_BMI = BMI*1.01) 
+# 
+```
 
 ## R Markdown
 
