@@ -124,7 +124,7 @@ mapply(BMI_m, weight = df$weight, height = df$height, gender = df$gender)
 wine_data <- read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv",
                       header = TRUE, sep=";") 
 # head(wine_data)
-summary(wine_data) # There are 12 variables. 
+summary(wine_data) # There are 12 variables and 1599 observations or rows.
 colMeans(wine_data) # This shows the mean value for each of the columns. 
 # The data frame contains 12 numeric variables that describe red wine quality.
 

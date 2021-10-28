@@ -26,6 +26,19 @@ x<-2
 a<-3
 f1(x)
 ```
+
+create dataframe
+```{r}
+Code <- c("A23","F84","R2","I322")
+age <- c(21,35,829,2)
+gender <- c("m","f","m","e")
+height <- c(181,173,171,166)
+weight <- c(69,58,75,60)
+
+df <- cbind.data.frame(Code,age,gender,height,weight)
+
+```
+
 Trying to do another solution for the function problem
 
 ```{r}
@@ -53,31 +66,4 @@ simplify <- function (u,v){
   (u + v) *2
 }
 ```
-Doing the male bmi 
-```{r}
-library(tidyverse)
-df2 <- df %>% 
-  filter(gender == "m") %>% 
-  mutate(new_BMI = BMI*1.01) 
-# 
-```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
