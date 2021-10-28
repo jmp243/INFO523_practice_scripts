@@ -1,0 +1,45 @@
+---
+title: "HW3_JM_Park"
+author: "Jung Mee Park"
+date: "10/27/2021"
+output: html_document
+---
+# Questions 
+based on the [data](https://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones).
+
+### 1.	Please describe the dataset in detail and explain how it has been used in previous analyses. 
+* The dataset includes experimental data from 30 human subjects ranging from 19 to 48. The subjects performed 6 basic physical activities - walking, walking upstairs, walking downstairs, sitting, standing, and laying - while wearing a smartphone. 
+* Each subject performed 6 basic activities at least twice. The researchers ran the protocols twice per subject. The researchers captured the subjects' time to complete these tasks and also measured acceloration and other senors. 
+
+### 2.	What questions have been asked based on this dataset?
+
+
+### 3.	There are two main folders: training and testing. What are these files used for and what is their importance in Data Science?
+* Training data should be a random subset of that data. The training sample is used to cross-validate the models you wish to predict outcomes from your model. Training data helps you identify important predictive variables. Testing data is used to predict outcomes based on variables selected after creating models using the training data. The researchers processed sensor signals to track the participants movement. The data 
+
+### 4.	Choose one paper from the “Relevant Papers” section in the website. State the question that was examined in the study. Briefly outline the methods used in the paper (e.g. algorithms). Was there any data cleaning step? Explain. List the main conclusions of the study. Finally, include at least two suggestions that you think might help improve the quality of the paper. 
+* I chose Davide Anguita, Alessandro Ghio, Luca Oneto, Xavier Parra, Jorge L. Reyes-Ortiz. Energy Efficient Smartphone-Based Activity Recognition using Fixed-Point Arithmetic. Journal of Universal Computer Science. Special Issue in Ambient Assisted Living: Home Care. Volume 19, Issue 9. May 2013. 
+For their analysis, the split the data set into training (30%) and testing (70%) data. The data from the study was collected in a supervised experimental setting. 
+
+## Problem set 1: HAR dataset
+1.	Read the training data into R and name it “train”. Rename all the columns using the correct column name. Make all column names unique if necessary.
+```{r}
+setwd("~/Documents/INFO 523 fall 2021/Assignments/HW3/UCI HAR Dataset/train")
+
+```
+
+
+2.	Find any column with both positive and negative numbers. Create a new column and name it “discrete” with only observations falling in two discrete categories based on your target column: "pos" (positive observations) and "neg" (negative observations). The output should be saved in an object named 'train_q2'.
+3.	Using "train_q2", remove the original continuous column used in Question 2. The resulting object should be named 'train_q3'.
+4.	Next, reorder the columns in "train_q3" such that the columns with mean values (column names have the pattern "mean") appear first in the data set. Store the results in "train_q4".
+5.	Using "train_q3", show the first "4" rows of every column summarizing the angle between vectors. There is no need to save this in the environment.
+6.	Using "train_q3", remove all the rows with at least one observation falling outside quantiles 0.025 and 0.975 of any column in the data set. Store the resulting object in "train_q6".
+7.	Next, assume we are interested in accounting for groups ("discrete" columns) when removing “extreme” observations across the dataset. Please follow the same steps used to create "train_q6" but remove extreme observations within each group ("discrete"). Store the results in "train_q7".
+8.	Let's do some basic calculations on the "train_q3" data set. For each group, calculate the average estimate of the minimum value across X, Y, and Z for the "tBodyGyro-mean()-" features. Store the results in "train_q8".
+9.	Finally, create a new column based on "train_q3" that indicates which of the three "tBodyGyro-mean()-" columns contain the smallest value. Store the results in "train_q9".
+
+
+```{r}
+
+```
+
