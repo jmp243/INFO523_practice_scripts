@@ -12,7 +12,7 @@ based on the [data](https://archive.ics.uci.edu/ml/datasets/Human+Activity+Recog
 * Each subject performed 6 basic activities at least twice. The researchers ran the protocols twice per subject. The researchers captured the subjects' time to complete these tasks and also measured acceloration and other senors. 
 
 ### 2.	What questions have been asked based on this dataset?
-
+* The researchers asked how smart devices such as smart phones can be used to monitor patients, especially elderly and disabled persons, from afar. A question is whether smartphones can be used to monitor activities of daily living (ADL) adequately. Furthermore, we can inquire whether energy efficiency should be optimized for potential users of this technology. 
 
 ### 3.	There are two main folders: training and testing. What are these files used for and what is their importance in Data Science?
 * Training data should be a random subset of that data. The training sample is used to cross-validate the models you wish to predict outcomes from your model. Training data helps you identify important predictive variables. Testing data is used to predict outcomes based on variables selected after creating models using the training data. The researchers processed sensor signals to track the participants movement. The training is used to improve the performance of the testing one. Validation dataset used to test it more. 
@@ -25,21 +25,317 @@ For their analysis, the split the data set into training (30%) and testing (70%)
 1.	Read the training data into R and name it “train”. Rename all the columns using the correct column name. Make all column names unique if necessary.
 ```{r}
 setwd("~/Documents/INFO 523 fall 2021/Assignments/HW3/UCI HAR Dataset/train")
+data_y <- read.table(file="y_train.txt", header = FALSE)
+data_x <- read.table(file="X_train.txt", header = FALSE) 
+subject <- read.table(file="subject_train.txt", header = FALSE)
 
 ```
 
+Load in labels 
+```{r}
+setwd("~/Documents/INFO 523 fall 2021/Assignments/HW3/UCI HAR Dataset")
+features <- read.table(file="features.txt", header = FALSE) # read this data set with two columns
+
+activity <- read.table(file="activity_labels.txt", header = FALSE)
+
+```
+add labels for activities and subject id
+```{r}
+activity_code <- c(WALKING=1, WALKING_UPSTAIRS=2, WALKING_DOWNSTAIRS=3, 
+                     SITTING=4,  STANDING=5, LAYING=6)
+names(subject)[names(subject)=="V1"] <- "SubjectID"
+
+# for data y
+names(data_y)[names(data_y)=="V1"] <- "Activity_labels"
+
+data_y$Activity_labels <- names(activity_code)[match(data_y$Activity_labels, activity_code)]
+
+```
+Make sure the variables have unique names
+```{r}
+colnames(data_x) <- features$V2 # make sure they are unique colnames
+
+```
+check for duplicates 
+```{r}
+any(duplicated(names(data_x))) # TRUE
+length(which(duplicated(names(data_x))==TRUE))
+```
+Combine the data frames
+```{r}
+sub_y <- cbind(subject, data_y)
+```
+Rename data frame to train. 
+```{r}
+train <- cbind(sub_y, data_x)
+```
 
 2.	Find any column with both positive and negative numbers. Create a new column and name it “discrete” with only observations falling in two discrete categories based on your target column: "pos" (positive observations) and "neg" (negative observations). The output should be saved in an object named 'train_q2'.
-3.	Using "train_q2", remove the original continuous column used in Question 2. The resulting object should be named 'train_q3'.
-4.	Next, reorder the columns in "train_q3" such that the columns with mean values (column names have the pattern "mean") appear first in the data set. Store the results in "train_q4".
-5.	Using "train_q3", show the first "4" rows of every column summarizing the angle between vectors. There is no need to save this in the environment.
-6.	Using "train_q3", remove all the rows with at least one observation falling outside quantiles 0.025 and 0.975 of any column in the data set. Store the resulting object in "train_q6".
-7.	Next, assume we are interested in accounting for groups ("discrete" columns) when removing “extreme” observations across the dataset. Please follow the same steps used to create "train_q6" but remove extreme observations within each group ("discrete"). Store the results in "train_q7".
-8.	Let's do some basic calculations on the "train_q3" data set. For each group, calculate the average estimate of the minimum value across X, Y, and Z for the "tBodyGyro-mean()-" features. Store the results in "train_q8".
-9.	Finally, create a new column based on "train_q3" that indicates which of the three "tBodyGyro-mean()-" columns contain the smallest value. Store the results in "train_q9".
 
-
-```{r}
+```{r include=FALSE}
+library(data.table)
+library(Hmisc)
+library(stringr)
+library(devtools)
+library(tidyverse)
+library(dplyr)
 
 ```
+Create a new column
+```{r}
+train$discrete <- ifelse(train$`tBodyAcc-mean()-Y`>0,"pos","neg")
+train_q2 <- as.data.frame(train)
+```
+
+3.	Using "train_q2", remove the original continuous column used in Question 2. The resulting object should be named 'train_q3'.
+```{r}
+train_q3 <- train_q2[,-4] 
+```
+
+4.	Next, reorder the columns in "train_q3" such that the columns with mean values (column names have the pattern "mean") appear first in the data set. Store the results in "train_q4".
+
+Store data in train_q4.
+```{r}
+train_q4 <- train_q3 %>% select(contains("mean"), everything()) 
+```
+
+5.	Using "train_q3", show the first "4" rows of every column summarizing the angle between vectors. There is no need to save this in the environment.
+```{r}
+train_q3 %>% 
+  select(starts_with("angle")) %>% 
+  head(n=4)
+
+```
+
+6.	Using "train_q3", remove all the rows with at least one observation falling outside quantiles 0.025 and 0.975 of any column in the data set. Store the resulting object in "train_q6".
+
+Create upper and lower bounds
+```{r}
+lower_bound <- quantile(train_q3$`angle(Y,gravityMean)`, 0.025)
+lower_bound
+
+upper_bound <- quantile(train_q3$`angle(Y,gravityMean)`, 0.975)
+upper_bound
+
+outlier_ind <- which(train_q3$`angle(Y,gravityMean)`< lower_bound | train_q3$`angle(Y,gravityMean)` > upper_bound)
+outlier_ind
+```
+remove outliers
+```{r}
+train_q6 <- train_q3[-outlier_ind,]
+```
+
+7.	Next, assume we are interested in accounting for groups ("discrete" columns) when removing “extreme” observations across the dataset. Please follow the same steps used to create "train_q6" but remove extreme observations within each group ("discrete"). Store the results in "train_q7".
+
+create a function to call outliers NA's
+```{r}
+outlierTreament<-function(x){
+  qnt <- quantile(x, probs=c(.025, .975), na.rm = T)
+  x[x < (qnt[1])] <- NA
+  x[x > (qnt[2])] <- NA
+  return(x)}
+
+numeric_cols<-names(train_q2)[sapply(train_q2, is.numeric)]
+numeric_data<-train_q2[,names(train_q2)%in%numeric_cols]
+
+train_q2_IQR<-as.data.frame(sapply(numeric_data,outlierTreament))
+
+train_q2_IQR$discrete <- ifelse(train$`tBodyAcc-mean()-Y`>0,"pos","neg") # recreate discrete
+train_q2_IQR <- cbind(data_y, train_q2_IQR) # add back activity label
+train_q7 <- train_q2_IQR[!is.na(train_q2_IQR$`tBodyAcc-mean()-Y`),] 
+```
+
+8.	Let's do some basic calculations on the "train_q3" data set. For each group, calculate the average estimate of the minimum value across X, Y, and Z for the "tBodyGyro-mean()-" features. Store the results in "train_q8".
+```{r}
+train_q8 <- train_q3 %>% 
+  select(starts_with(c("tBodyGyro-mean()-"))) %>% 
+  summarise_if(is.numeric, min) 
+```
+
+9.	Finally, create a new column based on "train_q3" that indicates which of the three "tBodyGyro-mean()-" columns contain the smallest value. Store the results in "train_q9".
+
+Create a function
+```{r}
+min_gyro <- function(a){
+  return = which(a == min(a))
+}
+```
+use the apply function and save as q9
+```{r}
+train_q9 <- data.frame(train_q3)
+train_q9$row_min <- apply(as.matrix(train_q9[,c(122:124)]),1, min_gyro)
+
+train_q9$row_min <- recode_factor(train_q9$row_min, "1" = "X", "2" = "Y", "3" = "Z") 
+
+
+```
+## Problem Set 2
+
+Read in data
+```{r}
+setwd("~/Documents/INFO 523 fall 2021/Assignments/HW3/")
+data <- read.csv(file="population-figures-by-country-csv_csv.csv", header = TRUE) 
+```
+1. First, rename the second column of "data" to "code". 
+```{r}
+names(data)[names(data)=="Country_Code"] <- "code"
+```
+
+Next, create two new columns summarizing the percentage of world population for each country at two times: 1960 and 2016 (columns '%_timeA' and '%_timeB'). 
+duplicate data 
+```{r}
+data1 <- as.data.frame(data)
+```
+
+I should drop rows like "Upper middle income", "World", "Heavily indebted poor countries (HIPC)", "High income", "Fragile and conflict affected situations", etc. However, line 257 is the World. 
+column for 1960
+```{r}
+data1$"%_Year_1960" <- data1$Year_1960/data1$Year_1960[257]
+```
+column for 2016
+```{r}
+data1$"%_Year_2016" <- data1$Year_2016/data1$Year_2016[257]
+```
+
+Create a third new column (named 'diff') that should summarize the absolute difference between '%_timeA' and '%_timeB'. 
+```{r}
+data1$diff <- (data1$"%_Year_1960"- data1$"%_Year_2016")
+```
+
+Finally, create a new row showing the total of every numeric column. For this later step, use the string “-” when columns are non-numeric (e.g. country, code). Save this as "data2" in the environment.
+
+```{r include=FALSE}
+library(janitor)
+library(purrr)
+library(stringr)
+library(devtools)
+library(tidyverse)
+library(dplyr)
+```
+
+create a sum
+```{r}
+total <- data1 %>%
+  select_if(is.numeric) %>%
+  replace(is.na(.), 0) %>% 
+  map_dbl(sum)
+```
+
+create a new data set
+```{r}
+total_new <- as.data.frame(t(total))
+Country <- c("nothing")
+code <- c("nothing")
+total_new$Country <- Country
+total_new$code <- code
+
+total_new <- total_new %>% relocate(code, .before = Year_1960)
+total_new <- total_new %>% relocate(Country, .before = code)
+
+data2 <- rbind(data1, total_new) 
+```
+
+
+2.	Now, reshape "data" from wide to long format. Sort the resulting data set by country first and then by year. 
+duplicate data
+```{r}
+data3 <- as.data.frame(data2)
+```
+
+```{r}
+# reshape the data from wide to long
+library(reshape2)
+data_long1 <- melt(data3,                                 # Apply melt function
+                   id.vars = c("Country", "code"))        # try pivot_longer later
+
+```
+
+Next, for each country, keep only the oldest and most recent years with non-missing values for population sizes. 
+function to find the min. 
+```{r}
+find_nonNA <- function(x){
+  # return = which(a == min(a))
+  # return = which(a == !is.na(a))
+  NonNAindex <- which(!is.na(x))
+  firstNonNA <- min(NonNAindex)
+  return(firstNonNA)
+}
+
+data3$index2 <- apply(data3[,3:59], 1, find_nonNA) 
+
+```
+
+function to find the max
+```{r}
+find_nonNA2 <- function(x){
+  NonNAindex <- which(!is.na(x))
+  lastNonNA <- max(NonNAindex)
+  return(lastNonNA)
+}
+
+data3$index3 <- apply(data3[,3:59], 1, find_nonNA2) 
+
+```
+Find the diff year
+```{r}
+data3$Diff_year <- (data3$index3- data3$index2)
+```
+
+(2) 'Diff_growth' (difference in population size between years)
+```{r}
+find_diff <- function(x){
+  NonNAindex <- which(!is.na(x))
+  lastNonNA <- max(NonNAindex)
+  NonNAindex <- which(!is.na(x))
+  firstNonNA <- min(NonNAindex)
+  diff = x[lastNonNA] - x[firstNonNA]
+  return(diff)
+}
+
+data3$diff_growth <- apply(data3[,3:59], 1, find_diff)
+```
+(3) 'Rate_percent' = ((Diff_growth / Diff_year)/oldest_year). The resulting data set should only include only the following columns: Country, code, Diff_year, Diff_growth, and Rate_percent. Save the resulting object in "data3". 
+
+create a function for rate percent
+```{r}
+rate_pct <- function(x){
+  NonNAindex <- which(!is.na(x))
+  lastNonNA1 <- max(NonNAindex)
+  NonNAindex2 <- which(!is.na(x))
+  firstNonNA <- min(NonNAindex2)
+  diff = x[lastNonNA1] - x[firstNonNA]
+  growth = 100*(diff/(lastNonNA1-firstNonNA))/x[lastNonNA1]
+  return(growth)
+}
+data3$Rate_percent <- apply(data3[,3:59], 1, rate_pct)
+
+```
+Serbia, West Bank and Gaza, and Sint Maarten (Dutch part) start late. Not until 1990 for Serbia, West Bank and Gaza. For Sint Maarten (Dutch part), not unitl 1998. 
+
+Eritrea drops out after 2011. Others end at 2016. 
+
+3.	Split "data3" into a continent-based list. Use only the countries that overlap with the following data set: https://datahub.io/JohnSnowLabs/country-and-continent-codes-list/r/country-and-continent-codes-list-csv.csv. 
+
+read in data with contintent labels
+```{r}
+setwd("~/Documents/INFO 523 fall 2021/Assignments/HW3/")
+
+continent <- read.csv(file="country-and-continent-codes-list-csv_csv.csv", header = TRUE, sep = ",")
+
+sub_continent <- subset(continent, select = c(Continent_Name, Continent_Code, Three_Letter_Country_Code))
+
+data3_cont <- merge(data3,sub_continent, by.x = "code", by.y = "Three_Letter_Country_Code")
+```
+
+
+###In a comment within the script, provide two ideas on how this new list could be used to perform calculations with functions within the "apply” family.
+
+tapply can be used to pass categorical variables. We can calculate lengths to see how many countries are from given continents. 
+```{r include=FALSE}
+tapply(data3_cont$Continent_Name, data3_cont$Country, median)
+```
+
+lapply can be used to fix the name of continent abbreviation for North America from NA to something else so the dataset is read in correctly. 
+
+
 

@@ -1,0 +1,39 @@
+---
+title: "HW_4_Park"
+author: "Jung Mee Park"
+date: "11/1/2021"
+output: html_document
+---
+Part 1. Warming up! (29 points)
+
+Load a basic Titanic dataset. Use the following code:
+```{r}
+library(datasets)
+data(Titanic)
+
+```
+
+1.	What is the class of object “Titanic”? What variables does it have?  Explain. (1 pt)
+* There are categorical variables, which are classified as factors or characters, in R. We see variables about what class, the passengar was in - 1st, 2nd, or 3rd, whether the person was an adult or child, sex, and whether the passengar survived or not. 
+
+2.	Run this code: ‘plot(Titanic)’. What kind of plot did you get? Why was the data plotted this way? What is your interpretation of this graph? (1 pt)
+* The plot allows you to see survival rates based on different variables such as sex, class, and age. From what I see, women survived at a higher rate than men, especially if they were in first class. First class passengers survived more than the other classes. 
+```{r}
+plot(Titanic)
+```
+3.	Transform the data into a data.frame. We’ll be using this object to create some visuals in the next questions. (1 pt)
+```{r}
+titanic <- as.data.frame(Titanic)
+```
+
+4.	(ggplot2) Now, please create a canvas for the figure. Show only the axes (i.e. don’t include any geometry). Plot “class” (x axis) and “freq” (y axis). (1 pt)
+```{r}
+library(ggplot2)
+```
+
+5.	 (ggplot2) Display the data as a boxplot. Can you think of a better (or similar) way to display the visual patterns between “class” and “freq”? (2 pts) Explain.
+6.	(ggplot2) Now, include the raw data on top of the boxplot. Use the geom_jitter() and list one additional alternative for plotting the raw data. Please make sure that outliers are not represented twice (e.g. plotted under the boxplot and in the scatterplot layers). (1 pt)
+7.	(ggplot2) In geom_jitter, set ‘width=0.25’ and ‘alpha=0.5’. Explain what these arguments do. (1 pt)
+8.	(ggplot2) Plot “freq” by “class” using histograms. Make only a single plot. Change the colors. (1 pt)
+9.	Perform steps 4–6, and 8 using functions from base R. (5 pts)
+10.	Perform steps 4–6, and 8 using plotly from R. (5 pts)
