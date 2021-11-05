@@ -29,11 +29,49 @@ titanic <- as.data.frame(Titanic)
 4.	(ggplot2) Now, please create a canvas for the figure. Show only the axes (i.e. don’t include any geometry). Plot “class” (x axis) and “freq” (y axis). (1 pt)
 ```{r}
 library(ggplot2)
+ggplot(titanic, aes(Class, Freq)) 
 ```
 
 5.	 (ggplot2) Display the data as a boxplot. Can you think of a better (or similar) way to display the visual patterns between “class” and “freq”? (2 pts) Explain.
+```{r}
+ggplot(titanic, aes(Class, Freq)) +
+  geom_boxplot()
+```
+
 6.	(ggplot2) Now, include the raw data on top of the boxplot. Use the geom_jitter() and list one additional alternative for plotting the raw data. Please make sure that outliers are not represented twice (e.g. plotted under the boxplot and in the scatterplot layers). (1 pt)
+```{r}
+ggplot(titanic, aes(Class, Freq)) +
+  geom_boxplot() +
+  geom_jitter()
+```
+
 7.	(ggplot2) In geom_jitter, set ‘width=0.25’ and ‘alpha=0.5’. Explain what these arguments do. (1 pt)
+```{r}
+ggplot(titanic, aes(Class, Freq)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.25, alpha=0.5)
+```
+
 8.	(ggplot2) Plot “freq” by “class” using histograms. Make only a single plot. Change the colors. (1 pt)
+```{r}
+library(RColorBrewer)
+ggplot(titanic, aes(Freq, fill = Class)) + 
+  geom_histogram(binwidth = 35) +
+  scale_fill_brewer(palette = "Set3") 
+```
+
 9.	Perform steps 4–6, and 8 using functions from base R. (5 pts)
+```{r}
+boxplot(Freq ~ Class, method = "jitter", pch = 19,
+        col = 4, data=titanic)
+```
+
 10.	Perform steps 4–6, and 8 using plotly from R. (5 pts)
+```{r}
+library(plotly)
+
+p1 <- plot_ly(titanic, x = ~Freq, type = "histogram") 
+p1 <- p1 %>%  layout(barmode = "overlay")
+p1 
+```
+
