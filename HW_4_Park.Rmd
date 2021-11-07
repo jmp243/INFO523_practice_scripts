@@ -19,6 +19,10 @@ library(Amelia)
 library(titanic)
 library(GGally)
 library(datasets)
+library(patchwork)
+library(ggpubr)
+library(janitor)
+library(gclus)
 ```
 
 ```{r}
@@ -123,7 +127,7 @@ gender_plot <- ggplot(train_titanic, aes(x=Survived, fill=Sex)) +
   geom_bar(position=position_dodge()) +
   geom_text(stat = 'count',
             aes(label=stat(count)),
-            position = position_dodge(width = 1), vjust=-0.5) + 
+            position = position_dodge(width = 0.9), vjust=-0.5) + 
             xlab("outcome") 
 gender_plot <- gender_plot + labs(title = "Survival count by sex", 
                                       subtitle = "training dataset") 
@@ -136,7 +140,7 @@ class_graph <- ggplot(train_titanic, aes(x=Survived, fill=Pclass)) +
   geom_bar(position = position_dodge()) + 
   geom_text(stat = 'count',
             aes(label=stat(count)),
-            position = position_dodge(width = 1), vjust=-0.5) + 
+            position = position_dodge(width = 0.9), vjust=-0.5) + 
   xlab("outcome") 
 
 
@@ -152,7 +156,7 @@ train_titanic$Discretized.age <- cut(train_titanic$Age, c(0,10,20,30,40,50,60,70
 
 age_bar <- ggplot(train_titanic, aes(x = Discretized.age, fill=Survived)) +
   geom_bar(position = position_dodge()) +
-  geom_text(stat='count', aes(label=stat(count)), position = position_dodge(width=1), vjust=-0.5)+
+  geom_text(stat='count', aes(label=stat(count)), position = position_dodge(width=0.9), vjust=-0.5)+
   theme_classic() + 
   xlab("outcome") 
 
@@ -191,18 +195,6 @@ full_titantic_model <- glm(Survived ~ Sex+Pclass+Age+SibSp+Parch+Fare,
 
 summary(full_titantic_model)
 ```
-calculate predicted probabilities in a results table
-```{r}
-predicted_probabilities <- predict(full_titantic_model,              
-                                   newdata=train_titanic,      
-                                   type="response")   
-### Convert to 0, 1 preds
-class_preds <- ifelse(predicted_probabilities >= 0.5, 1, 0)  
-
-result_table <- table(class_preds,             
-                      train_titanic$Survived)  
-result_table
-```
 
 
 3.	What were the characteristics of the passengers that did not survive? Approach this question from the angle of class, age, and fare distribution.
@@ -232,17 +224,21 @@ print(violin_age)
 
 4.	Do you notice any interesting patterns in survival frequencies based on the place where passengers boarded? (e.g. where did most passengers board? Is there any difference in survival for passengers boarding from different places?)
 ```{r}
-embark_graph <- ggplot(train_titanic, aes(x=Survived, fill=Embarked)) + 
-  geom_bar(position = position_dodge()) + 
-  geom_text(stat = 'count',
-            aes(label=stat(count)),
-            position = position_dodge(width = 1), vjust=-0.5) + 
-  xlab("outcome") 
+embark_titanic <- train_titanic[!is.na(train_titanic$Embarked),]
+pct_graph2 <-
+      ggplot(embark_titanic %>% count(Embarked, Survived) %>%# Group by then count number in each group
+         mutate(pct=n/sum(n),               # Calculate percent within port
+                ypos = cumsum(n) - 0.5*n),  # Calculate label positions
+       aes(Embarked, n, fill=Survived)) +
+       geom_bar(stat="identity") +
+       labs(x = "port of embarkment", y = "number of people") +
+       geom_text(aes(label=paste0(sprintf("%1.1f", pct*100),"%")), 
+            position=position_stack(vjust=0.5))
 
-embark_graph <- embark_graph + labs(title = "Survival count by port of embarkment",
-                                  subtitle = "training dataset", 
-                                  fill = "Port")
-print(embark_graph)
+pct_graph2 <- pct_graph2 + labs(title = "Survival percentage by embarkment", 
+                                subtitle = "training dataset",  fill = "Outcome")
+
+print(pct_graph2)
 ```
 Port of embarkment distribution 
 ```{r}
@@ -255,17 +251,45 @@ Most people boarded in Southampton, so there may habe been anecdotal evidence th
 ```{r}
 violin_sib <- ggplot(train_titanic, aes(x = Survived, y = SibSp, fill = Sex)) +
   geom_violin() +
-  ylab("Sibling and Spouse") 
-violin_sib <- violin_sib +  labs(title = "Violin plot of Survival", 
-                                 subtitle = "training dataset") 
-print(violin_sib)
+  # stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") +
+  ylab("Sibling and Spouse") +
+  xlab("") +
+  theme(legend.position = "none" )
+violin_parch <- ggplot(train_titanic, aes(x = Survived, y = Parch, fill = Sex)) +
+  geom_violin() +
+  # stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") +
+  ylab("Parent and Child") +
+  xlab("")
+sibparch_both <- (violin_sib + violin_parch) +    # Create grid of plots with title
+  plot_annotation(title = "Violin Plots for Survival", subtitle = "Siblings/Spouse and Parent/Child")
 
-table(train_titanic$Survived, train_titanic$SibSp)
+print(sibparch_both)
 ```
 Your survival rate was higher if you traveled in a smaller group.
 
 # Extra credit
-```{r}
+Note, the following factors about the figure x-axis: mpg data (miles per gallon)
+y-axis: wt data (weight) size: hp data (horsepower)
+color: gear (how many gears the car has) The x- and y-axis labels have been changed
+The font sizes of the axes have been enlarged to 15
+The font sizes of the axis titles have been changed to bold and changed to size 20
 
+```{r}
+class(mtcars$hp)
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$gear <- as.factor(mtcars$gear)
+
+theme_set(theme_classic())
+
+cars_graph <- ggplot(mtcars, aes(x=mpg, y=wt, size=hp, colour=gear)) +
+  geom_point(show.legend = FALSE) +
+  geom_smooth(method = 'lm', se = FALSE) +
+  scale_x_continuous(name = "Miles per gallon") + 
+  scale_y_continuous(name = "Weight") +
+  theme(axis.text = element_text(size = 15), 
+        axis.title = element_text(size = 20, face = "bold"), 
+        legend.position="none")
+  
+cars_graph
 ```
 

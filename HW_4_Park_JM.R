@@ -13,8 +13,10 @@ library(plotly)
 library(psych)
 library(Amelia)
 library(titanic)
-library(GGally)
+# library(GGally)
 library(datasets)
+library(gridExtra) 
+
 data(Titanic)
 
 plot(Titanic)
@@ -98,6 +100,7 @@ train_titanic$Pclass  <- recode_factor(train_titanic$Pclass,
 train_titanic$PassengerId <- as.factor(train_titanic$PassengerId)
 train_titanic$Embarked <- recode_factor(train_titanic$Embarked,
                                         "C" = "Cherbourg", "Q" = "Queenstown", "S" = "Southampton")
+
 train_titanic$Cabin <- as.factor(train_titanic$Cabin)
 train_titanic$char_cabin <- as.character(train_titanic$Cabin)     
 
@@ -126,7 +129,7 @@ gender_plot <- ggplot(train_titanic, aes(x=Survived, fill=Sex)) +
   geom_bar(position=position_dodge()) +
   geom_text(stat = 'count',
             aes(label=stat(count)),
-            position = position_dodge(width = 1), vjust=-0.5) + 
+            position = position_dodge(width = 0.9), vjust=-0.5) + 
             xlab("0 = Dead, 1 = Survived") 
 gender_plot <- gender_plot + labs(title = "Survival count by sex", 
                                       subtitle = "training dataset") 
@@ -155,13 +158,13 @@ class_graph <- ggplot(train_titanic, aes(x=Survived, fill=Pclass)) +
   geom_bar(position = position_dodge()) + 
   geom_text(stat = 'count',
             aes(label=stat(count)),
-            position = position_dodge(width = 1), vjust=-0.5) + 
+            position = position_dodge(width = 0.9), vjust=-0.5) + 
   xlab("outcome") 
 
 
 class_graph <- class_graph + labs(title = "Survival count by class",
-                                    # subtitle = "training dataset", 
-                                    fill = "Class")
+                                  # subtitle = "training dataset", 
+                                  fill = "Class")
 print(class_graph)
 
 # simple table 
@@ -179,7 +182,7 @@ train_titanic$Discretized.age <- cut(train_titanic$Age, c(0,10,20,30,40,50,60,70
 # Plot discretized age
 age_bar <- ggplot(train_titanic, aes(x = Discretized.age, fill=Survived)) +
   geom_bar(position = position_dodge()) +
-  geom_text(stat='count', aes(label=stat(count)), position = position_dodge(width=1), vjust=-0.5)+
+  geom_text(stat='count', aes(label=stat(count)), position = position_dodge(width=0.9), vjust=-0.5)+
   theme_classic() + 
   xlab("0 = Dead, 1 = Survived") 
 
@@ -220,9 +223,10 @@ tabl
 # 2.	What was the order of priority (i.e. gender and age) to rescue passengers of Titanic?
 # women and children and then 1st, 2nd, 3rd class individuals
 # train_titanic$Survived ~ train_titanic$Sex
-violin_two <- ggplot(train_titanic, aes(x = Survived, y = Fare)) +
+violin_two <- ggplot(train_titanic, aes(x = Survived, y = Fare, fill=Survived)) +
   geom_violin() +
   ylab("cost of fare") +
+  xlab("") +
   stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") 
 
 violin_two <- violin_two +  labs(title = "Violin plot of Survival by fare", 
@@ -321,17 +325,20 @@ embark_graph <- embark_graph + labs(title = "Survival count by port of embarkmen
 print(embark_graph)
 
 # do a percentage of embarked
-theme_classic()
-pct_graph2 <- train_titanic %>% 
-  drop_na(Embarked) %>%
-  ggplot(aes(x=Embarked, 
-                            y=Survived, fill = Survived)) +
-  geom_bar(stat='identity') +
-  labs(x = "port of embarkment", y = "count") 
-  # geom_text(aes(label = scales::percent(pct), y = if_else(count > 0.1*max(count), count/2, count+ 0.05*max(count))))
+# new dataset with no missing Embarkment
+embark_titanic <- train_titanic[!is.na(train_titanic$Embarked),]
+pct_graph2 <-
+      ggplot(embark_titanic %>% count(Embarked, Survived) %>%    # Group by region and species, then count number in each group
+         mutate(pct=n/sum(n),               # Calculate percent within each region
+                ypos = cumsum(n) - 0.5*n),  # Calculate label positions
+       aes(Embarked, n, fill=Survived)) +
+       geom_bar(stat="identity") +
+       labs(x = "port of embarkment", y = "number of people") +
+       geom_text(aes(label=paste0(sprintf("%1.1f", pct*100),"%")), 
+            position=position_stack(vjust=0.5))
 
 pct_graph2 <- pct_graph2 + labs(title = "Survival percentage by embarkment", 
-                                subtitle = "training dataset",  fill = "Class")
+                                subtitle = "training dataset",  fill = "Outcome")
 
 print(pct_graph2)
 
@@ -341,38 +348,79 @@ print(pct_graph2)
 violin_sib <- ggplot(train_titanic, aes(x = Survived, y = SibSp, fill = Sex)) +
   geom_violin() +
   # stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") +
-  ylab("Sibling and Spouse") 
+  ylab("Sibling and Spouse") +
+  xlab("") +
+  theme(legend.position = "none" )
 violin_sib <- violin_sib +  labs(title = "Violin plot of Survival", 
                                  subtitle = "training dataset") 
 print(violin_sib)
 
 table(train_titanic$Survived, train_titanic$SibSp)
 
-# violin for 
+# violin for parch 
 
 violin_parch <- ggplot(train_titanic, aes(x = Survived, y = Parch, fill = Sex)) +
   geom_violin() +
   # stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") +
-  ylab("Parent and Child") 
+  ylab("Parent and Child") +
+  xlab("")
 violin_parch <- violin_parch +  labs(title = "Violin plot of Survival", 
                                  subtitle = "training dataset") 
 print(violin_parch)
 
 table(train_titanic$Survived, train_titanic$Parch)
 
-### extra credi
+# plot multiple graphs
+library(patchwork)
+library(ggpubr)
+library(janitor)
+
+sibparch_both <- (violin_sib + violin_parch) +    # Create grid of plots with title
+  plot_annotation(title = "Violin Plots for Survival", subtitle = "Siblings/Spouse and Parent/Child")
+
+print(sibparch_both)
+####
+violin_2 <- ggplot(train_titanic, aes(x = Survived, y = Fare, fill=Survived)) +
+  geom_violin() +
+  ylab("cost of fare") +
+  xlab("") +
+  stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") 
+
+violin_2 <- violin_2 +  labs(subtitle = "Survival by fare") 
+print(violin_2)
+
+chatD_both <- (violin_first + violin_2) +    # Create grid of plots with title
+  plot_annotation(title = "Violin Plots")
+
+print(chatD_both)
+
+### extra credit ###############33
 summary(mtcars)
-View(mtcars)
+# install.packages("gclus")
+library(gclus)
+class(mtcars$hp)
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$gear <- as.factor(mtcars$gear)
 
-cars_graph <- ggplot(mtcars, aes(x=))
+theme_set(theme_classic())
 
-### extra credit 2
+cars_graph <- ggplot(mtcars, aes(x=mpg, y=wt, size=hp, colour=gear)) +
+  geom_point(show.legend = FALSE) +
+  scale_x_continuous(name = "Miles per gallon") + 
+  scale_y_continuous(name = "Weight") +
+  theme(axis.text = element_text(size = 15), 
+        axis.title = element_text(size = 20, face = "bold"))
+  
+# cars_graph <- cars_graph + theme_classic()  
+
+cars_graph
+### extra credit 2 ########################################3
 library(tidyverse)
 library(ggtext)
 library(patchwork)
 df_simpsons <- readr::read_delim("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-27/simpsons-guests.csv", delim = "|", quote = "")
 
-## ggplot them
+## ggplot theme
 source(here::here("R", "tidy_grey.R"))
 theme_update(rect = element_rect(color = NA, 
                                  fill = "#FFCC00"),
