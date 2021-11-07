@@ -5,8 +5,15 @@
 # HW 4
 
 ## Part 1
-
-# load in titanic dataset
+library(corrplot)
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+library(plotly)
+library(psych)
+library(Amelia)
+library(titanic)
+library(GGally)
 library(datasets)
 data(Titanic)
 
@@ -16,8 +23,7 @@ plot(Titanic)
 titanic <- as.data.frame(Titanic)
 
 # 4. Plot “class” (x axis) and “freq”
-library(dplyr)
-library(ggplot2)
+
 
 # ggplot(data, aes(x, y))
 ggplot(titanic, aes(Class, Freq)) 
@@ -40,7 +46,7 @@ ggplot(titanic, aes(Class, Freq)) +
   geom_jitter(width = 0.25, alpha=0.5)
 
 # 8. Plot “freq” by “class” using histograms. Make only a single plot. Change the colors.
-library(RColorBrewer)
+
 ggplot(titanic, aes(Freq, fill = Class)) + 
   geom_histogram(binwidth = 35) +
   scale_fill_brewer(palette = "Set3") 
@@ -50,7 +56,7 @@ boxplot(Freq ~ Class, method = "jitter", pch = 19,
         col = 4, data=titanic)
 
 # 10. Histogram in plotly.  
-library(plotly)
+
 
 p1 <- plot_ly(titanic, x = ~Freq, type = "histogram") 
 # p1 <- p1 %>% 
@@ -81,17 +87,17 @@ print(violin_first)
 ####
 # looked at https://medium.com/analytics-vidhya/a-beginners-guide-to-learning-r-with-the-titanic-dataset-a630bc5495a8
 
-library(psych)
-# install.packages("Amelia")
-library(Amelia)
-
 # assign as factor variables
 # train_titanic$Survived <- as.factor(train_titanic$Survived)
 train_titanic$Survived  <- recode_factor(train_titanic$Survived , "1" = "Survived", "0" = "Died")
 
 train_titanic$Pclass <- factor(train_titanic$Pclass, levels = c("3","2","1"), 
                                   ordered = TRUE)
+train_titanic$Pclass  <- recode_factor(train_titanic$Pclass,
+                                       "1" = "1st", "2" = "2nd", "3" = "3rd")
 train_titanic$PassengerId <- as.factor(train_titanic$PassengerId)
+train_titanic$Embarked <- recode_factor(train_titanic$Embarked,
+                                        "C" = "Cherbourg", "Q" = "Queenstown", "S" = "Southampton")
 train_titanic$Cabin <- as.factor(train_titanic$Cabin)
 train_titanic$char_cabin <- as.character(train_titanic$Cabin)     
 
@@ -105,8 +111,6 @@ train_titanic$Cabin <- new_Cabin
 
 # prepare missing variables 
 train_titanic[train_titanic == ""] <- NA                     # Replace blank by NA
-
-library(GGally)
 
 ggcorr(train_titanic,
        nbreaks = 6,
@@ -204,7 +208,9 @@ agg_titanic <-aggregate(train_titanic$Fare,
 agg_titanic
 
 # run a t.test
-t.test(, var.equal = TRUE) # this did not work. 
+t.test(train_titanic$Age ~ train_titanic$Survived) # ttest for age
+t.test(train_titanic$Fare ~ train_titanic$Survived) # ttest for fare
+
 # go over the figures first 
 
 # aggregate for age
@@ -314,6 +320,21 @@ embark_graph <- embark_graph + labs(title = "Survival count by port of embarkmen
                                   fill = "Port")
 print(embark_graph)
 
+# do a percentage of embarked
+theme_classic()
+pct_graph2 <- train_titanic %>% 
+  drop_na(Embarked) %>%
+  ggplot(aes(x=Embarked, 
+                            y=Survived, fill = Survived)) +
+  geom_bar(stat='identity') +
+  labs(x = "port of embarkment", y = "count") 
+  # geom_text(aes(label = scales::percent(pct), y = if_else(count > 0.1*max(count), count/2, count+ 0.05*max(count))))
+
+pct_graph2 <- pct_graph2 + labs(title = "Survival percentage by embarkment", 
+                                subtitle = "training dataset",  fill = "Class")
+
+print(pct_graph2)
+
 # 5.	Was it a good idea to travel in big groups with parents/children or 
 # was it better to travel in small groups with siblings/spouses?
 
@@ -325,6 +346,8 @@ violin_sib <- violin_sib +  labs(title = "Violin plot of Survival",
                                  subtitle = "training dataset") 
 print(violin_sib)
 
+table(train_titanic$Survived, train_titanic$SibSp)
+
 # violin for 
 
 violin_parch <- ggplot(train_titanic, aes(x = Survived, y = Parch, fill = Sex)) +
@@ -335,3 +358,160 @@ violin_parch <- violin_parch +  labs(title = "Violin plot of Survival",
                                  subtitle = "training dataset") 
 print(violin_parch)
 
+table(train_titanic$Survived, train_titanic$Parch)
+
+### extra credi
+summary(mtcars)
+View(mtcars)
+
+cars_graph <- ggplot(mtcars, aes(x=))
+
+### extra credit 2
+library(tidyverse)
+library(ggtext)
+library(patchwork)
+df_simpsons <- readr::read_delim("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-27/simpsons-guests.csv", delim = "|", quote = "")
+
+## ggplot them
+source(here::here("R", "tidy_grey.R"))
+theme_update(rect = element_rect(color = NA, 
+                                 fill = "#FFCC00"),
+             line = element_blank(),
+             text = element_text(color = "white"), 
+             plot.margin = margin(10, 40, 20, 40))
+
+df_simpsons <- readr::read_delim("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-27/simpsons-guests.csv", delim = "|", quote = "")
+
+df_simpsons_series <- 
+  df_simpsons %>% 
+  filter(season != "Movie") %>% 
+  mutate(season = as.numeric(season)) %>% 
+  separate(number, c("no_cont", "no_season"), sep = "–")
+
+top <- 
+  df_simpsons_series %>% 
+  count(guest_star) %>% 
+  top_n(6, n) %>% 
+  arrange(-n) %>%
+  pull(guest_star)
+lev <- c(top, "other")
+df_simpsons_lumped <- 
+  df_simpsons_series %>% 
+  count(season, guest_star) %>% 
+  group_by(guest_star) %>% 
+  mutate(total = n()) %>% 
+  group_by(season) %>% 
+  arrange(desc(n), desc(total), guest_star) %>% 
+  mutate(
+    ranking = row_number(),
+    top = ifelse(guest_star %in% top, guest_star, "other"),
+    top = factor(top, levels = lev)
+  )
+ranks <- 
+  ggplot(df_simpsons_lumped, 
+         aes(season, ranking, 
+             color = top)) +
+  geom_segment(data = tibble(x = 0.3, xend = 30.5, y = 1:61), 
+               aes(x = x, xend = xend, y = y, yend = y),
+               color = "white", linetype = "dotted") +
+  geom_segment(data = tibble(x = 30.5, xend = 31, y = 2:61), 
+               aes(x = x, xend = xend, y = y, yend = y),
+               color = "white") +
+  geom_segment(data = tibble(x = 30.5, xend = 31.5, y = c(1, seq(5, 60, by = 5))), 
+               aes(x = x, xend = xend, y = y, yend = y),
+               color = "white") +
+  geom_point(color = "white", 
+             size = 5) +
+  geom_point(color = "#FFCC00", 
+             size = 3) + 
+  geom_line(data = filter(df_simpsons_lumped, top != "other"), 
+            size = 1, 
+            alpha = 1) +
+  geom_point(data = filter(df_simpsons_lumped, top != "other"), 
+             size = 9) + 
+  geom_point(data = filter(df_simpsons_lumped, top != "other"), 
+             color = "#FFCC00", 
+             size = 6) + 
+  geom_text(data = filter(df_simpsons_lumped, top != "other"), 
+            aes(label = n),
+            family = "Roboto",
+            fontface = "bold", 
+            size = 3) +
+  annotate("label", x = 10, y = 55, 
+           fill = "#FFCC00", 
+           color = "white",
+           family = "Roboto Mono", 
+           fontface = "bold", 
+           size = 4.5,
+           label.padding = unit(1, "lines"),
+           label = 'Ranking of guest star appearances per\nseason in the TV series "The Simpsons".\n\nThe six top guests are colored\n and visualised as their common character.\nAll others are ranked anonymously and\nindicate the total number of guests\nper season. In case of a tie guest stars\nare sorted by the number of appearances.') +
+  scale_x_continuous(position = "top", 
+                     limits = c(0, 31.5), 
+                     breaks = 1:30,
+                     expand = c(0.01, 0.01)) +
+  scale_y_reverse(position = "right", 
+                  limits = c(61, 1), 
+                  breaks = c(1, seq(5, 60, by = 5)),
+                  expand = c(0.01, 0.01)) +
+  scale_color_manual(values = c("#00947E", "#FF5180", "#460046", 
+                                "#727273", "#B26C3A", "#C72626")) +
+  scale_linetype_manual(values = c(rep(1, 6), 0)) +
+  theme(axis.text = element_text(color = "white",
+                                 family = "Roboto Mono", 
+                                 face = "bold"),
+        axis.title.y = element_text(hjust = 0),
+        panel.border = element_rect(color = NA),
+        legend.position = "none") +
+  labs(x = "Season", y = "Ranking\n")
+
+labels <-
+  tibble(
+    labels = c(
+      "<img src='https://upload.wikimedia.org/wikipedia/en/7/76/Edna_Krabappel.png'
+    +     width='100' /><br><b style='color:#00947E'>Marcia Wallace</b><br><i style='color:#00947E'>Edna Krabappel</i></b>",
+      "<img src='https://upload.wikimedia.org/wikipedia/en/6/6c/Troymcclure.png'
+    +     width='90' /><br><b style='color:#FF5180'>Phil Hartman</b><br><i style='color:#FF5180'>Troy McClure</i></b>",
+      "<img src='https://upload.wikimedia.org/wikipedia/en/3/3e/FatTony.png'
+    +     width='110' /><br><b style='color:#460046'>Joe Mantegna</b><br><i style='color:#460046'>Fat Tony</i></b>",
+      "<img src='./img/orson.png'
+    +     width='85' /><br><b style='color:#727273'>Maurice LaMarche</b><br><i style='color:#727273'>Several VIPs</i>",
+      "<img src='https://upload.wikimedia.org/wikipedia/en/8/8a/SantasLittleHelper.png'
+    +     width='100' /><br><b style='color:#B26C3A'>Frank Welker</b><br><i style='color:#B26C3A'>Santas Little Helper</i></b>",
+      "<img src='https://upload.wikimedia.org/wikipedia/en/c/c8/C-bob.png'
+    +     width='100' /><br><b style='color:#C72626'>Kelsey Grammer</b><br><i style='color:#C72626'>Sideshow Bob</i></b>"
+    ),
+    x = 1:6, 
+    y = rep(1, 6)
+  )
+legend <- 
+  ggplot(labels, aes(x, y)) +
+  geom_richtext(aes(label = labels), 
+                fill = NA, 
+                color = NA, 
+                vjust = 0) +
+  annotate("text", x = 3.5, y = 1.018, 
+           label = 'Guest Voices in "The Simpsons"', 
+           size = 15, 
+           fontface = "bold", 
+           family = "Poppins") +
+  scale_x_continuous(limits = c(0.6, 6.1)) +
+  scale_y_continuous(limits = c(1, 1.02)) +
+  theme_void() +
+  theme(plot.background = element_rect(fill = "#FFCC00"))
+
+caption <- 
+  ggplot(data.frame(x = 1:2, y = 1:10)) +
+  labs(x = NULL, y = NULL,
+       caption = "Visualization by Cédric Scherer  |  Source: Wikipedia  |  Image  Copyright: Matt Groening & 20th Century Fox                                                   ") +
+  theme(line = element_blank(),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", 
+                                       color = "transparent"),
+        panel.border = element_rect(color = "transparent"),
+        axis.text = element_blank())
+
+legend + ranks + caption + plot_layout(ncol = 1, heights = c(0.25, 1, 0))
+ggsave(here::here("plots", "2019_35", "2019_35_SimpsonsGuests.pdf"), 
+       width = 16, height = 24, device = cairo_pdf)
+
+sessionInfo()

@@ -8,15 +8,17 @@ editor_options:
 ---
 # Part 1.
 Load a basic Titanic dataset. Use the following code:
-```{r include=FALSE}
-library(datasets)
-library(psych)
-library(GGally)
-library(Amelia)
-library(ggplot2)
-library(dplyr)
-library(plotly)
+```{r message=FALSE}
 library(corrplot)
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+library(plotly)
+library(psych)
+library(Amelia)
+library(titanic)
+library(GGally)
+library(datasets)
 ```
 
 ```{r}
@@ -66,7 +68,6 @@ ggplot(titanic, aes(Class, Freq)) +
 
 8.	(ggplot2) Plot “freq” by “class” using histograms. Make only a single plot. Change the colors. (1 pt)
 ```{r}
-library(RColorBrewer)
 ggplot(titanic, aes(Freq, fill = Class)) + 
   geom_histogram(binwidth = 35) +
   scale_fill_brewer(palette = "Set3") 
@@ -100,8 +101,12 @@ Transform select variables into factors
 train_titanic$Survived  <- recode_factor(train_titanic$Survived , "1" = "Survived", "0" = "Died")
 train_titanic$Pclass <- factor(train_titanic$Pclass, levels = c("3","2","1"), 
                                   ordered = TRUE)
+train_titanic$Pclass  <- recode_factor(train_titanic$Pclass,
+                                       "1" = "1st", "2" = "2nd", "3" = "3rd")
 train_titanic$PassengerId <- as.factor(train_titanic$PassengerId)
-train_titanic$Cabin <- as.factor(train_titanic$Cabin)
+train_titanic$Embarked <- recode_factor(train_titanic$Embarked,
+                          "C" = "Cherbourg", "Q" = "Queenstown", "S" = "Southampton")
+
 ```
 Prepare missing variables
 ```{r}
@@ -112,7 +117,7 @@ Check for missing values
 missmap(train_titanic, main = "Missing values vs observed") # age is missing in some cases
 ```
 
-Survival count by sex
+###Survival count by sex
 ```{r}
 gender_plot <- ggplot(train_titanic, aes(x=Survived, fill=Sex)) +
   geom_bar(position=position_dodge()) +
@@ -124,7 +129,8 @@ gender_plot <- gender_plot + labs(title = "Survival count by sex",
                                       subtitle = "training dataset") 
 gender_plot
 ```
-Survival by class
+
+###Survival by class
 ```{r}
 class_graph <- ggplot(train_titanic, aes(x=Survived, fill=Pclass)) + 
   geom_bar(position = position_dodge()) + 
@@ -139,7 +145,8 @@ class_graph <- class_graph + labs(title = "Survival count by class",
                                     fill = "Class")
 print(class_graph)
 ```
-Survival by age
+
+###Survival by age
 ```{r}
 train_titanic$Discretized.age <- cut(train_titanic$Age, c(0,10,20,30,40,50,60,70,80,100))
 
@@ -155,20 +162,26 @@ age_bar <- age_bar + labs(title = "Survival count by age",
 print(age_bar)
 
 ```
-Survival by fare
-```{r}
 
+###Survival by fare
+```{r}
 violin_first <- ggplot(train_titanic, aes(x = Survived, y = Fare, fill=Sex)) +
   geom_violin() +
+  xlab("") +
   ylab("cost of fare") 
-violin_first <- violin_first +  labs(title = "Violin plot of Survival by fare and gender", 
-                                     subtitle = "training dataset") 
+violin_first <- violin_first +  labs(title = "Violin plot of Survival by fare and gender", subtitle = "training dataset") 
 print(violin_first)
 ```
 
-
 If possible, compare groups using the appropriate statistical tests (e.g. t-student vs Wilcoxon-Mann-Whitney U).
-
+```{r}
+t.test(train_titanic$Age ~ train_titanic$Survived)
+```
+The survivors were slightly younger. The p-value = 0.04119, which means we can reject the null hypothesis at the 0.05 level. 
+```{r}
+t.test(train_titanic$Fare ~ train_titanic$Survived) # ttest for fare
+```
+The survivors paid higher fares. The p-value = 2.699e-11 so we can be extremely confident that fair prices affected survival rates. 
 
 2.	What was the order of priority (i.e. gender and age) to rescue passengers of Titanic?
 ```{r}
@@ -188,28 +201,29 @@ class_preds <- ifelse(predicted_probabilities >= 0.5, 1, 0)
 
 result_table <- table(class_preds,             
                       train_titanic$Survived)  
-
 result_table
 ```
 
 
 3.	What were the characteristics of the passengers that did not survive? Approach this question from the angle of class, age, and fare distribution.
 ```{r}
-violin_two <- ggplot(train_titanic, aes(x = Survived, y = Fare)) +
+violin_two <- ggplot(train_titanic, aes(x = Survived, y = Fare, fill=Survived)) +
   geom_violin() +
   ylab("cost of fare") +
-  stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") 
+  xlab("") +
+  stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") +
+  theme(legend.position="none") 
 
 violin_two <- violin_two +  labs(title = "Violin plot of Survival by fare", 
                                      subtitle = "training dataset") 
 print(violin_two)
 ```
 looking at sex and age 
-```{r}
+```{r warning=FALSE}
 violin_age <- ggplot(train_titanic, aes(x = Survived, y = Age, fill = Sex)) +
   geom_violin() +
-  # stat_summary(fun = "mean", geom = "point", shape = 8, size = 3, color = "midnightblue") +
-  ylab("Age") 
+  ylab("Age") +
+  xlab("")
 violin_age <- violin_age +  labs(title = "Violin plot of Survival by age and sex", 
                                  subtitle = "training dataset") 
 print(violin_age)
@@ -238,6 +252,19 @@ table(train_titanic$Embarked, train_titanic$Survived)
 Most people boarded in Southampton, so there may habe been anecdotal evidence that people who boarded elsewhere survived more often. 55% of those who embarked in Cherbourg survived and only 34% of those who boarded in Southampton survived. Queenstown had a survival percent of 39%. 
 
 5.	Was it a good idea to travel in big groups with parents/children or was it better to travel in small groups with siblings/spouses?
+```{r}
+violin_sib <- ggplot(train_titanic, aes(x = Survived, y = SibSp, fill = Sex)) +
+  geom_violin() +
+  ylab("Sibling and Spouse") 
+violin_sib <- violin_sib +  labs(title = "Violin plot of Survival", 
+                                 subtitle = "training dataset") 
+print(violin_sib)
+
+table(train_titanic$Survived, train_titanic$SibSp)
+```
+Your survival rate was higher if you traveled in a smaller group.
+
+# Extra credit
 ```{r}
 
 ```
