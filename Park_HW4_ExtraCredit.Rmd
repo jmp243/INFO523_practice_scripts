@@ -1,0 +1,32 @@
+---
+title: "Park_HW4_ExtraCredit"
+author: "Jung Mee Park"
+date: "11/7/2021"
+output: html_document
+---
+# Extra credit 1
+Note, the following factors about the figure x-axis: mpg data (miles per gallon)
+y-axis: wt data (weight) size: hp data (horsepower)
+color: gear (how many gears the car has) The x- and y-axis labels have been changed
+The font sizes of the axes have been enlarged to 15
+The font sizes of the axis titles have been changed to bold and changed to size 20
+
+```{r}
+class(mtcars$hp)
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$gear <- as.factor(mtcars$gear)
+
+theme_set(theme_classic())
+
+cars_graph <- ggplot(mtcars, aes(x=mpg, y=wt, size=hp, colour=gear)) +
+  geom_point(show.legend = FALSE) +
+  geom_smooth(method = 'lm', se = FALSE) +
+  scale_x_continuous(name = "Miles per gallon") + 
+  scale_y_continuous(name = "Weight") +
+  theme(axis.text = element_text(size = 15), 
+        axis.title = element_text(size = 20, face = "bold"), 
+        legend.position="none")
+  
+cars_graph
+```
+
