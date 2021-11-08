@@ -16,6 +16,7 @@ library(titanic)
 # library(GGally)
 library(datasets)
 library(gridExtra) 
+library(devtools)
 
 data(Titanic)
 
@@ -102,18 +103,20 @@ train_titanic$Embarked <- recode_factor(train_titanic$Embarked,
                                         "C" = "Cherbourg", "Q" = "Queenstown", "S" = "Southampton")
 
 train_titanic$Cabin <- as.factor(train_titanic$Cabin)
-train_titanic$char_cabin <- as.character(train_titanic$Cabin)     
+# train_titanic$char_cabin <- as.character(train_titanic$Cabin)     
+# 
+# new_Cabin <- ifelse(train_titanic$char_cabin == "",          
+#                     "",                        
+#                     substr(train_titanic$char_cabin,1,1))    
+# 
+# new_Cabin <- factor(new_Cabin )                
+# train_titanic$Cabin <- new_Cabin
 
-new_Cabin <- ifelse(train_titanic$char_cabin == "",          
-                    "",                        
-                    substr(train_titanic$char_cabin,1,1))    
-
-new_Cabin <- factor(new_Cabin )                
-train_titanic$Cabin <- new_Cabin
 # train_titanic$Age <- as.numeric(train_titanic$Age)
 
 # prepare missing variables 
 train_titanic[train_titanic == ""] <- NA                     # Replace blank by NA
+
 
 ggcorr(train_titanic,
        nbreaks = 6,
@@ -130,7 +133,7 @@ gender_plot <- ggplot(train_titanic, aes(x=Survived, fill=Sex)) +
   geom_text(stat = 'count',
             aes(label=stat(count)),
             position = position_dodge(width = 0.9), vjust=-0.5) + 
-            xlab("0 = Dead, 1 = Survived") 
+            xlab("outcome") 
 gender_plot <- gender_plot + labs(title = "Survival count by sex", 
                                       subtitle = "training dataset") 
 gender_plot
@@ -149,6 +152,22 @@ gender_stack <- gender_stack + labs(title = "Survival count by sex",
                                 # subtitle = "training dataset", 
                                 fill = "Sex")
 print(gender_stack) # overall 38% of the passengers survived.
+
+###
+pct_graph <-
+  ggplot(train_titanic %>% count(Sex, Survived) %>%    # Group by region and species, then count number in each group
+           mutate(pct=n/sum(n),               # Calculate percent within each region
+                  ypos = cumsum(n) - 0.5*n),  # Calculate label positions
+         aes(Sex, n, fill=Survived)) +
+  geom_bar(stat="identity") +
+  labs(x = "gender", y = "number of people") +
+  geom_text(aes(label=paste0(sprintf("%1.1f", pct*100),"%")), 
+            position=position_stack(vjust=0.5))
+
+pct_graph <- pct_graph + labs(title = "Survival percentage by gender", 
+                                subtitle = "training dataset",  fill = "outcome")
+
+print(pct_graph)
 
 # simple table 
 table(train_titanic$Survived, train_titanic$Sex)
@@ -177,18 +196,20 @@ age_density <- ggplot(train_titanic, aes(x=Age)) +
 print(age_density)
 
 # survival by age
-train_titanic$Discretized.age <- cut(train_titanic$Age, c(0,10,20,30,40,50,60,70,80,100))
+age_titanic <- train_titanic[!is.na(train_titanic$Age),]
+
+age_titanic$Discretized.age <- cut(age_titanic$Age, c(0,10,20,30,40,50,60,70,80,100))
 # train_titanic$Discretized.age = NULL
 # Plot discretized age
-age_bar <- ggplot(train_titanic, aes(x = Discretized.age, fill=Survived)) +
+age_bar <- ggplot(age_titanic, aes(x = Discretized.age, fill=Survived)) +
   geom_bar(position = position_dodge()) +
   geom_text(stat='count', aes(label=stat(count)), position = position_dodge(width=0.9), vjust=-0.5)+
   theme_classic() + 
-  xlab("0 = Dead, 1 = Survived") 
+  xlab("age") 
 
 age_bar <- age_bar + labs(title = "Survival count by age",
-                                  subtitle = "training dataset", 
-                                  fill = "Survived")
+                                  # subtitle = "training dataset", 
+                                  fill = "")
 print(age_bar)
 
 # Furthermore, the mean age of the passengars. 
@@ -245,7 +266,6 @@ print(violin_age)
 # subset data into survivor and nonsurvivor
 # titanic_survive <- train_titanic[train_titanic$Survived == 1, ]
 # titanic_die <- train_titanic[train_titanic$Survived == 0, ]
-
 
 # library(rpart)
 # library(rpart.plot)
@@ -370,6 +390,8 @@ print(violin_parch)
 
 table(train_titanic$Survived, train_titanic$Parch)
 
+mean(train_titanic$Parch)
+
 # plot multiple graphs
 library(patchwork)
 library(ggpubr)
@@ -406,13 +428,13 @@ theme_set(theme_classic())
 
 cars_graph <- ggplot(mtcars, aes(x=mpg, y=wt, size=hp, colour=gear)) +
   geom_point(show.legend = FALSE) +
+  geom_smooth(method = 'lm', se = FALSE) +
   scale_x_continuous(name = "Miles per gallon") + 
   scale_y_continuous(name = "Weight") +
   theme(axis.text = element_text(size = 15), 
-        axis.title = element_text(size = 20, face = "bold"))
+        axis.title = element_text(size = 20, face = "bold"), 
+        legend.position="none")
   
-# cars_graph <- cars_graph + theme_classic()  
-
 cars_graph
 ### extra credit 2 ########################################3
 library(tidyverse)
