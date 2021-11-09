@@ -1,0 +1,57 @@
+---
+title: "Homework5_Pt2_park"
+author: "Jung Mee Park"
+date: "11/9/2021"
+output: html_document
+---
+# Part B. K-centers clustering (20 points)
+Please implement a function (or set of functions) that perform k-means and k-median clustering on a training dataset. The overall procedure was reviewed in the slides. More information on the algorithm and its implementation is available in Cichoz Ch12. However, feel free to use any other source. Please annotate your code (add as many details as needed) and cite any relevant sources.
+```{r include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+library(Hmisc)
+library(mice)
+library(caret)
+```
+
+You will run your function in the California housing prices: https://raw.githubusercontent.com/mohitgupta-omg/Kaggle-California-Housing-Prices/master/Data/housing.csv  
+```{r}
+houses <- read.csv("https://raw.githubusercontent.com/mohitgupta-omg/Kaggle-California-Housing-Prices/master/Data/housing.csv")
+```
+
+Before fitting inferring the clusters, please:
+1.	Drop any observations of houses on Islands.
+```{r}
+main_houses <- houses %>% 
+  filter(ocean_proximity != "ISLAND")
+```
+
+2.	Use median values per column to impute any missing observation.
+```{r}
+impute_houses <- impute(main_houses)
+```
+
+3.	Remove collinearity in the dataset (fit a PCA or keep values with r<0.7)
+```{r}
+res.pca <- prcomp(numeric_houses, scale = TRUE)
+# Use a PCA (and use the resulting PCs)
+summary(res.pca)
+
+```
+
+find eigenvalues
+```{r}
+fviz_eig(res.pca)
+
+eig.val <- get_eigenvalue(res.pca)
+eig.val
+```
+lattitude and longitude explain a lot of the proportion of variation. It may be worthwhile to remove them. 
+
+4.	Create a training (70% of observations) and testing datasets (30%). Please set a seed to 3. Use the training dataset only.
+```{r}
+
+```
+
+5.	Fit the k-means and k-median algorithm (use 6 clusters).
