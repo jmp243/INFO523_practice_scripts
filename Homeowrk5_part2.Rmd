@@ -10,8 +10,10 @@ Please implement a function (or set of functions) that perform k-means and k-med
 library(dplyr)
 library(ggplot2)
 library(RColorBrewer)
-library(Hmisc)
-library(mice)
+library(arules)
+library(factoextra)
+library(cluster)
+library(arulesViz)
 library(caret)
 ```
 
@@ -51,7 +53,16 @@ lattitude and longitude explain a lot of the proportion of variation. It may be 
 
 4.	Create a training (70% of observations) and testing datasets (30%). Please set a seed to 3. Use the training dataset only.
 ```{r}
-
+set.seed(3)
+trainIndex <- createDataPartition(houses$population, p = .7,
+                                  list = FALSE,
+                                  times = 1)
+house_train <- houses[ trainIndex,]
+house_test <- houses[-trainIndex,]
 ```
 
 5.	Fit the k-means and k-median algorithm (use 6 clusters).
+```{r}
+
+```
+
