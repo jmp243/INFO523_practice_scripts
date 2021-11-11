@@ -15,6 +15,8 @@ library(factoextra)
 library(cluster)
 library(arulesViz)
 library(caret)
+library(Hmisc)
+library(mice)
 ```
 
 You will run your function in the California housing prices: https://raw.githubusercontent.com/mohitgupta-omg/Kaggle-California-Housing-Prices/master/Data/housing.csv  
@@ -36,33 +38,47 @@ impute_houses <- impute(main_houses)
 
 3.	Remove collinearity in the dataset (fit a PCA or keep values with r<0.7)
 ```{r}
-res.pca <- prcomp(numeric_houses, scale = TRUE)
-# Use a PCA (and use the resulting PCs)
-summary(res.pca)
+impute_houses$total_bedrooms <- as.numeric(impute_houses$total_bedrooms)
+numeric_houses <- select_if(impute_houses, is.numeric) 
 
 ```
-
-find eigenvalues
+create a new dataframe without the variables that contributed to multicollinearity. 
 ```{r}
-fviz_eig(res.pca)
-
-eig.val <- get_eigenvalue(res.pca)
-eig.val
+df2 <- cor(numeric_houses)
+hc <- findCorrelation(df2, cutoff=0.7) # putt any value as a "cutoff" 
+hc <- sort(hc)
+reduced_Data <- numeric_houses[,-c(hc)]
 ```
-lattitude and longitude explain a lot of the proportion of variation. It may be worthwhile to remove them. 
+
+Lattitude and longitude explain a lot of the proportion of variation but only the longitude data was kept using the findCorrelation method. Also total rooms and total bedrooms were similar variables. Only total bedrooms was kept in the reduced dataset.
 
 4.	Create a training (70% of observations) and testing datasets (30%). Please set a seed to 3. Use the training dataset only.
 ```{r}
 set.seed(3)
-trainIndex <- createDataPartition(houses$population, p = .7,
+trainIndex <- createDataPartition(reduced_Data$population, p = .7,
                                   list = FALSE,
                                   times = 1)
-house_train <- houses[ trainIndex,]
-house_test <- houses[-trainIndex,]
+house_train <- reduced_Data[trainIndex,]
+house_test <- reduced_Data[-trainIndex,]
 ```
 
 5.	Fit the k-means and k-median algorithm (use 6 clusters).
 ```{r}
+fit_kmeans <- kmeans(na.omit(house_train), 6) # omit NA's
+# fit_kmeans
 
+fviz_cluster(fit_kmeans, data = house_train)
 ```
+This cluster looks highly unstable because the clusters are essentially on top of one another. 
 
+fit k-median
+```{r}
+df <- scale(house_train)
+pam.res <- pam(df, 6)
+
+dd <- cbind(house_train, cluster = pam.res$cluster)
+pam.res$medoids
+
+fviz_cluster(pam.res, data = dd) # is this a helpful graph? 
+```
+Cluster 5 is so large here in comparison to the other clusters that I need to re-examine how I set up the data. I am not sure if the clusters were meant to be this close. I did not come up with the number of clusters so I did not see the breaks.

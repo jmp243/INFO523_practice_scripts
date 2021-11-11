@@ -1,0 +1,179 @@
+---
+title: "Homework 5 Part 1"
+author: "Jung Mee Park"
+date: "11/8/2021"
+output: html_document
+---
+# Part A
+load dataset
+```{r}
+load("/Users/jungmeepark/Downloads/dataset.RData")
+```
+## section i. 
+load packages
+```{r include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+library(arules)
+library(factoextra)
+library(cluster)
+library(arulesViz)
+```
+
+1.	Compute the percentage of passengers that were children.
+```{r}
+titanic %>% 
+  group_by(Age) %>% 
+  summarise(Count=n()) %>% 
+  mutate(Percentage=Count/sum(Count)*100)
+```
+
+2.	Compute the percentage of passengers that were women.
+```{r}
+titanic %>% 
+  group_by(Sex) %>% 
+  summarise(Count=n()) %>% 
+  mutate(Percentage=Count/sum(Count)*100)
+```
+
+3.	Compute the percentage of passengers that were in first class.
+```{r}
+titanic %>% 
+  group_by(Class) %>% 
+  summarise(Count=n()) %>% 
+  mutate(Percentage=Count/sum(Count)*100)
+```
+
+4.	Compute the percentage of people that survived.
+```{r}
+titanic %>% 
+  group_by(Survived) %>% 
+  summarise(Count=n()) %>% 
+  mutate(Percentage=Count/sum(Count)*100)
+```
+
+5.	What percentage of children survived?
+```{r}
+options(digits = 2)
+prop.table(table(titanic$Age, titanic$Survived),1)
+```
+
+6.	What percentage of women survived?
+```{r}
+prop.table(table(titanic$Sex, titanic$Survived),1)
+```
+
+7.	What percentage of first-class passengers survived?
+```{r}
+prop.table(table(titanic$Class, titanic$Survived),1)
+```
+
+8.	What percentage of third-class passengers survived?
+```{r}
+prop.table(table(titanic$Class, titanic$Survived),1) # This is the same table as above.
+```
+
+## section ii. 
+9.	Create a function that subsets a given data frame by using sex, age, class and survival as arguments. This function should return a new data frame of passengers that satisfies a specified criteria.
+```{r}
+my_selector <- function(data=titanic, Class, Sex, Age, Survived){
+  data[titanic$Class %in% Class & titanic$Sex %in% Sex & titanic$Age %in% Age & titanic$Survived %in% Survived, ]
+}
+```
+
+10.	Using the previous function, create a function that calculates the percentages of people who lived or died:
+```{r}
+pct_survived <- function(data=titanic, Class, Sex, Age){
+  num <- nrow(my_selector(Class = Class, Sex = Sex, Age = Age, Survived = "Yes"))
+  den <- num + nrow(my_selector(Class = Class, Sex = Sex, Age = Age, Survived = "No"))
+  pct <- (num/den)*100
+  return(pct)
+}
+```
+
+a.	Compare survival rates between men and boys in third-class fares.
+```{r}
+pct_survived(Class = "3rd", Sex = "Male", Age = "Adult")
+```
+```{r}
+pct_survived(Class = "3rd", Sex = "Male", Age = "Child")
+```
+
+- Men in 3rd class pretty much all perished. Men in the 3rd class had a low survival rate of 16%. Boys from the 3rd class only had a slightly higher survival rate at 27%.
+
+b.	Compare survival rates between women and girls in first-class fares.
+```{r}
+pct_survived(Class = "1st", Sex = "Female", Age = "Adult")
+```
+for girls
+```{r}
+pct_survived(Class = "1st", Sex = "Female", Age = "Child")
+```
+- Women and girls in the first class pretty much all survived. 100% of the girls survived. 97% of the women survived. 
+
+## section iii. 
+11.	Calculate some association rules using apriori() command. Please focus on the passengers who survived only: 
+```{r}
+titanic_rules <- apriori(titanic, parameter = list(minlen=3,supp=0.002,conf=0.2), 
+                         control = list(verbose=F), 
+                         appearance = list(default="lhs", rhs=("Survived=Yes")))
+inspect(titanic_rules)
+```
+THe output above shows that children of the 1st and 2nd class have the same survival rate (Zhao 2013, 99).
+
+12.	Please visualize the results (use the arulesViz). Add captions to each of the figures you generate. Explain the meaning of the axes.
+```{r message=FALSE}
+plot(titanic_rules,method="scatterplot",measure=c("support","confidence"),shading=c("lift"))
+```
+
+Scatter plot of the association rules. 
+
+```{r, fig.cap = "Left-hand side (LHS) shows several combinations of factors. Right-hand side (RHS) in this case represents survival." }
+plot(titanic_rules,method="grouped")
+```
+
+grouped by confidence
+```{r message=FALSE, fig.cap="Ordered by survival rate, children of the 1st and 2nd classes all survived and first class women nearly all survived."}
+plot(titanic_rules,method="grouped",measure=c("confidence")) 
+```
+The post likely to survive were children of 1st and 2nd classes. 
+
+graph of association rules
+```{r warning=FALSE, fig.cap="Children and women of the 1st and 2nd classes survived moreso than men of the corresponding classes."}
+plot(titanic_rules, method="graph")
+```
+
+graph of association rules with control type items
+```{r warning=FALSE,message=FALSE, fig.cap="Since this is a graph of all those who survived, we can see that the crew, mostly made up of men, mostly did not survive."}
+plot(titanic_rules, method="graph", control=list(type="items"))
+```
+
+13.	Sort the list of previously created rules. Use a lift > 3.0 to find the best rules. Briefly explain the best set of rules.
+```{r}
+rules.subset2 <- subset(titanic_rules, lift > 3)
+inspect(rules.subset2)
+```
+
+14.	Using the function in Q10, estimate the percentage of survival for each of the best rules selected in Q13. Refer to HW4 to re-assess your previous answers (+2 points).
+```{r}
+pct_survived(Class = "1st", Sex = "Male", Age = "Child")
+```
+```{r}
+pct_survived(Class = "2nd", Sex = "Male", Age = "Child")
+```
+```{r}
+pct_survived(Class = "1st", Sex = "Female", Age = "Child")
+```
+```{r}
+pct_survived(Class = "2nd", Sex = "Female", Age = "Child")
+```
+```{r}
+pct_survived(Class = "1st", Sex = "Female", Age = "Adult")
+```
+```{r}
+pct_survived(Class = "2nd", Sex = "Female", Age = "Adult")
+```
+
+### Reference
+Zhao, Y. (2013). R and Data Mining: Examples and Case Studies. Elsevier Science & Technology.

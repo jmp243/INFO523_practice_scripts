@@ -176,17 +176,23 @@ inspect(titanic_rules)
 plot(titanic_rules,method="scatterplot",measure=c("support","confidence"),shading=c("lift"))
 
 plot(titanic_rules,method="grouped",measure=c("confidence")) 
+# plot(rules,method="grouped",measure=c("confidence")) 
 
 plot(titanic_rules, method = "grouped")
 
 plot(titanic_rules, method="graph")
+# plot(rules, method="graph") # without redundant rules
 
 plot(titanic_rules, method="graph", control=list(type="items"))
 
+plot(titanic_rules, method="two-key plot")
+
 # http://r-statistics.co/Association-Mining-With-R.html
-# subsetRules <- which(colSums(is.subset(titanic_rules, titanic_rules)) > 1) # get subset rules in vector
-# length(subsetRules)  #> 11
-# rules <- rules[-subsetRules] # remove subset rules.
+subsetRules <- which(colSums(is.subset(titanic_rules, titanic_rules)) > 1) # get subset rules in vector
+length(subsetRules)  #> 11
+rules <- rules[-subsetRules] # remove subset rules.
+inspect(rules)
+
 # 13.	Sort the list of previously created rules. Use a lift > 3.0 to find the best rules. Briefly explain the best set of rules.
 
 
@@ -209,6 +215,7 @@ library(mice)
 impute_houses <- impute(main_houses)
 # 3.	Remove collinearity in the dataset (fit a PCA or keep values with r<0.7)
 impute_houses$total_bedrooms <- as.numeric(impute_houses$total_bedrooms)
+# impute_houses <- as.numeric(impute_houses)
 numeric_houses <- select_if(impute_houses, is.numeric)
 myCorr <- cor(numeric_houses)
 myCorr
@@ -242,18 +249,72 @@ res.var$cos2           # Quality of representation
 
 # additional reading - https://www.datacamp.com/community/tutorials/pca-analysis-r
 
+# another way 
+# https://www.statology.org/principal-components-analysis-in-r/
+results <- prcomp(numeric_houses, scale = TRUE)
+results$rotation <- -1*results$rotation
+results$rotation
+
+#reverse the signs of the scores
+results$x <- -1*results$x
+
+#display the first six scores
+head(results$x)
+
+head(numeric_houses[order(-numeric_houses$median_house_value),])
+
+#calculate total variance explained by each principal component
+results$sdev^2 / sum(results$sdev^2)
+
+#calculate total variance explained by each principal component
+var_explained = results$sdev^2 / sum(results$sdev^2)
+
+#create scree plot
+qplot(c(1:9), var_explained) + 
+  geom_line() + 
+  xlab("Principal Component") + 
+  ylab("Variance Explained") +
+  ggtitle("Scree Plot") +
+  ylim(0, .4)
+
 # 4.	Create a training (70% of observations) and testing datasets (30%). Please set a seed to 3. Use the training dataset only.
 # https://www.listendata.com/2015/02/splitting-data-into-training-and-test.html
 library(caret)
 
 set.seed(3)
-trainIndex <- createDataPartition(houses$population, p = .7,
+trainIndex <- createDataPartition(numeric_houses$population, p = .7,
                                   list = FALSE,
                                   times = 1)
-house_train <- houses[ trainIndex,]
-house_test <- houses[-trainIndex,]
+house_train <- numeric_houses[trainIndex,]
+house_test <- numeric_houses[-trainIndex,]
 
 # 5.	Fit the k-means and k-median algorithm (use 6 clusters).
 # https://uc-r.github.io/kmeans_clustering
 distance <- get_dist(house_train)
 fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+
+# https://towardsdatascience.com/k-means-clustering-in-r-feb4a4740aa
+# library(fpc)
+
+# subset house train data to make all numeric and remove lat/lon
+house_train2 <- house_train[,3:9]
+
+set.seed(3)
+
+# fit <- kmeans(na.omit(house_train[,3:6]), 6)
+# fit
+fit_kmeans <- kmeans(na.omit(house_train2), 6) # without lat and lon
+fit_kmeans
+
+fviz_cluster(fit_kmeans, data = house_train2)
+
+fit_kmeans2 <- kmeans(na.omit(house_train), 6) # without lat and lon
+fviz_cluster(fit_kmeans2, data = house_train)
+
+# fit the median
+library(Gmedian)
+df <- scale(house_train2)
+pam.res <- pam(df, 6)
+print(pam.res)
+
+dd <- cbind(house_train2, cluster = pam.res$cluster)
