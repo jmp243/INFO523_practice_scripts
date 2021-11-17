@@ -1,0 +1,26 @@
+---
+title: "HW_6_PartA"
+author: "Jung Mee Park"
+date: "11/15/2021"
+output: html_document
+---
+Part a (due Nov. 28): Review the book chapter! (PDF; max 2 pages; submission date 1; 10 points).
+1.	What is the goal of the selected case study (e.g. predict X, classify N)?
+In the case of detecting fraud, the goal was to identify anomalous cases that may have been fraudulent. The data was created based on the report of salespeople in a company. The goal here is to identify whether these reports have fraudulent information based on past reports (Torgo 2017, 295). 
+
+2.	What do they expect you to practice by following the selected chapter? Was any of these aspects not covered in the course?
+
+3.	What packages/tools did they use? 
+```{r}
+library(dplyr)
+library(DMwR2)
+library(ggplot2)
+library(forcats)
+```
+
+4.	In your own words, describe the overall analytical procedure followed in the chapter.
+
+5.	Note that this book was first published in 2010. Before you explore their code in detail, answer: which aspects do you think you can easily improve on their analytical and methodological approach.
+
+6.	What were the main conclusions of the chapter?
+- Torgo (2016, p.304) - Torgo writes that the conclusions drawn from the data may be biased because some fraudulent purcheses were not detected. Data quality is a huge concern in this example of fraud detection. 
