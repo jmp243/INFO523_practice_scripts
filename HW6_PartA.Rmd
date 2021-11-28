@@ -1,26 +1,45 @@
 ---
-title: "HW_6_PartA"
+title: "HW 6 Part A"
 author: "Jung Mee Park"
 date: "11/15/2021"
-output: html_document
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
 ---
-Part a (due Nov. 28): Review the book chapter! (PDF; max 2 pages; submission date 1; 10 points).
-1.	What is the goal of the selected case study (e.g. predict X, classify N)?
-In the case of detecting fraud, the goal was to identify anomalous cases that may have been fraudulent. The data was created based on the report of salespeople in a company. The goal here is to identify whether these reports have fraudulent information based on past reports (Torgo 2017, 295). 
+## Part A (due Nov. 28): ##
+#### Review the book chapter! (PDF; max 2 pages; submission date 1; 10 points) ####
 
-2.	What do they expect you to practice by following the selected chapter? Was any of these aspects not covered in the course?
+*1.	What is the goal of the selected case study (e.g. predict X, classify N)?*
 
-3.	What packages/tools did they use? 
-```{r}
+- In the case of detecting fraud, the goal was to identify anomalous cases that may have been fraudulent. The data was created based on the report of salespeople in a company. The goal here is to identify whether these reports have fraudulent information based on past purchase activities (Torgo 2016, 295). 
+
+*2.	What do they expect you to practice by following the selected chapter? Was any of these aspects not covered in the course?*
+
+- Outliers were discussed in previous statistics courses for me. However, we did not discuss the specifics of detecting outliers using R (Torgo 2016, 303). But we may have discussed it as a part of general descriptive data mining technique. Also, I have not looked into how to use ... in functions much but many of the examples on page 323 of the 2016 version of the book uses them.
+AdaBoost (p. 340) is also quite new. Hopefully, AdaBoost is named after Ada Lovelace but I am not sure. We did not discuss Bayesian statistics much. The discussion of Naive Bayes appears on page 335.
+
+*3.	What packages/tools did they use?* 
+```{r warning=FALSE, message=FALSE}
 library(dplyr)
 library(DMwR2)
 library(ggplot2)
 library(forcats)
+library(ROCR)
+library(UBL)
 ```
 
-4.	In your own words, describe the overall analytical procedure followed in the chapter.
+*4.	In your own words, describe the overall analytical procedure followed in the chapter.*
 
-5.	Note that this book was first published in 2010. Before you explore their code in detail, answer: which aspects do you think you can easily improve on their analytical and methodological approach.
+- The chapter examined a semi-supervised approach. Built on a series of observed reports from salespersons, Torgo outlined how detecting outliers can be used to detect fraudulent charges. The holdout estimates of evaluation metrics introduced The process of outliers ranking reintroduced the effect of clustering. Using Naive Bayes or AdaBoost classifiers, precision and cumulative recall curves were produced to identify outliers that lie outside the threshold limits. 
 
-6.	What were the main conclusions of the chapter?
-- Torgo (2016, p.304) - Torgo writes that the conclusions drawn from the data may be biased because some fraudulent purcheses were not detected. Data quality is a huge concern in this example of fraud detection. 
+*5.	Note that this book was first published in 2010. Before you explore their code in detail, answer: which aspects do you think you can easily improve on their analytical and methodological approach.*
+
+- Reading the updated version of the book in 2016, I still found some changes I needed to make. A lot of the code has not changed much from 2010 to 2016. For some reason, the commands for the ggplot on page 298 did not work for me. I needed to created a new dataframe using mutate instead of summarize to create a new variable - nTrans. Using tidyverse package to do some data cleaning can make the code easier to follow than reading over specific functions. 
+
+*6.	What were the main conclusions of the chapter?*
+
+- Torgo (2016, p.304) - Torgo writes that the conclusions drawn from the data may be biased because the report are created after a salesperson suspects fraud. Because the data is not drawn from all transactions, some fraudulent purchases were not detected. Data quality is a huge concern in this example of fraud detection. 
+
+### Reference
+Torgo, L. (2016). Data Mining with R: Learning with Case Studies, Second Edition. Chapman & Hall/CRC.
