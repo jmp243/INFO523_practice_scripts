@@ -1,0 +1,34 @@
+---
+title: "HW6_Part_C"
+author: "Jung Mee Park"
+date: "11/17/2021"
+output:
+  word_document: default
+  html_document: default
+---
+# Homework 6, Part C
+
+What did you improve/learn? (PDF; max 2 pages; submission date 2; 10 points). Write a report addressing at least the following aspects:
+Please answer the following three question once you’re done with Part B
+
+**1.	Did you find any flaws with their approach? Explain.**
+
+- I think writing a lot of functions specific to the task made it harder for someone outside the project to understand each of the steps. I noticed that the updated code did use more tidyverse packages but mainly for ggplot. It would have been good to see more data wrangling and variable creation or mutation. 
+
+**2.	What aspects were you able to improve? Explain.**
+
+- Torgo uses summarize() and then switches to summarise() on page 302. It would be nice to explain the difference between the two functions since grammatically they seem identical. The higher level functions that were used throughout the project was hard for a novice user like myself to follow. 
+
+**3.	Did the conclusions change in any way? Please explain.**
+
+- I do not think so. I did see that the Naive Bayes approach and the codes for it work consistently for me. Perhaps that was more due to my own coding errors. 
+
+**4.	Create a table summarizing the main changes between the original chapter and your new script.**
+
+- My changes can be found in lines 79-83, 151-153, and 196-204. 
+
+**5.	Re-assess your position in Part A-5. For instance, were you able to accomplish the changes/improvements you had in mind?**
+
+- No, I was sorely mistaken when I thought I could load the data and have everything work properly. My biggest problem was how some packages were not update for my use in R. 
+There were a lot of things I could not fix because I didn't understand how these complicated functions were written. If I had more knowledge, I could have fixed the bug in the function(i) i$probs[,1], etc. My biggest struggle for getting the code to work was the fact that some packages from 2016 were not compatible with my current version of R. I am running R version 4.1.1 (2021-08-10).
+I could not make much headway after line 404. For my paid work, I am currently trying to improve someone else's code in R and having to create a Tableau dashboard with the info. So this was a helpful exercise.
